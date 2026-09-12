@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#e4d6b8" />
+    <meta
+      name="description"
+      content="ЭХО — заводная аркада. Собирай шестерни, но каждая из них оживляет механического двойника, повторяющего твой путь."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>ЭХО — заводная аркада</title>
+    <!--
+      Yandex Games SDK: подключается только статическим тегом в исходном
+      index.html — прокси /sdk.js гарантированно работает лишь для тега,
+      присутствующего в HTML до сборки. НИКОГДА не добавлять через JS в рантайме.
+      Относительный путь — для хостинга на серверах Яндекса (продакшн);
+      при локальной разработке без SDK инициализация в src/yandex.ts сама
+      уходит в оффлайн-режим по таймауту, если sdk.js не смог загрузиться.
+    -->
+    <script async src="/sdk.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #efe3c8;
+  --color-paper-2: #e4d5b3;
+  --color-paper-3: #d8c69c;
+  --color-ink: #2e2318;
+  --color-ink-2: #4a3a28;
+  --color-brass: #c08a3e;
+  --color-brass-l: #e3ba6c;
+  --color-copper: #a9542f;
+  --color-rust: #8c3b23;
+  --color-moss: #5c6b45;
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #e0d0ab;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+canvas {
+  touch-action: none;
+  display: block;
+  -webkit-touch-callout: none;
+}
+
+.select-none-all {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Бумажная фактура: мягкий шум поверх фона */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.tabnum {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.animate-floaty {
+  animation: floaty 4.5s ease-in-out infinite;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 24s linear infinite;
+}
+.animate-spin-slow-rev {
+  animation: spin-slow 17s linear infinite reverse;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise {
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
