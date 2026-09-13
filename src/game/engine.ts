@@ -317,9 +317,17 @@ export class EchoGame {
     this.h = Math.max(1, rect.height);
     this.canvas.width = Math.round(this.w * this.dpr);
     this.canvas.height = Math.round(this.h * this.dpr);
+
+    // небольшой резерв сверху/снизу под HUD (плашки очков/завода/проскока
+    // сверху, кнопка проскока снизу) — раньше арена шла впритык на весь
+    // экран и HUD-плашки перекрывали игровое поле у верхнего края
+    const topPad = Math.min(this.h * 0.2, Math.max(88, this.h * 0.13));
+    const botPad = Math.min(this.h * 0.15, Math.max(64, this.h * 0.1));
+    const sidePad = Math.max(14, this.w * 0.015);
+
     this.cx = this.w / 2;
-    this.cy = this.h / 2;
-    this.R = Math.min(this.w, this.h) * 0.47;
+    this.cy = topPad + (this.h - topPad - botPad) / 2;
+    this.R = Math.min((this.w - sidePad * 2) / 2, (this.h - topPad - botPad) / 2) * 0.98;
   }
 
   // ——— ввод ———
@@ -552,7 +560,7 @@ export class EchoGame {
     };
     this.echoes.push(e);
     this.sfx.echoBorn();
-    if (this.gears === 1) this.floater(e.pos.x, e.pos.y - 0.08, "ЭХО ПРОБУДИЛОСЬ", "#4a3a28", 22);
+    if (this.gears === 1) this.floater(e.pos.x, e.pos.y - 0.08, t("game.echoAwoke"), "#4a3a28", 22);
     if (this.echoes.length > MAX_ECHOES) {
       const old = this.echoes.shift();
       if (old) this.crumble(old);

@@ -173,8 +173,9 @@ export default function App() {
       </div>
 
       {/* absolute, вне потока — не влияет на позицию центрированного контента;
-          скрыт на мобильных (мало вертикального места, основной трафик — ПК) */}
-      <div className="pointer-events-none absolute inset-y-0 left-3 z-10 hidden items-center sm:flex">
+          z-30 — выше подложки Overlay (z-20), иначе на меню/проигрыше уходил
+          под затемнение и был не виден; скрыт на мобильных (мало места). */}
+      <div className="pointer-events-none absolute inset-y-0 left-3 z-30 hidden items-center sm:flex">
         <Leaderboard />
       </div>
 

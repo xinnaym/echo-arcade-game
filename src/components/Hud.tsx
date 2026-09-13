@@ -55,18 +55,16 @@ export default function Hud({
         </Plate>
 
         <div className="flex flex-1 flex-col items-center gap-1.5">
+          {/* завод + проскок объединены в одну компактную плашку — раньше были
+              двумя отдельными и перекрывали верх игровой арены */}
           <Plate className="w-full max-w-[260px]">
-            <div className="mb-1 flex items-baseline justify-between">
-              <span className="text-xs font-semibold tracking-[0.22em] text-ink/70">{t("hud.wind")}</span>
-              <span
-                className={
-                  "tabnum text-xs font-semibold " + (low ? "animate-pulse text-rust" : "text-ink/60")
-                }
-              >
+            <div className="mb-0.5 flex items-baseline justify-between">
+              <span className="text-xs font-semibold tracking-[0.2em] text-ink/70">{t("hud.wind")}</span>
+              <span className={"tabnum text-xs font-semibold " + (low ? "animate-pulse text-rust" : "text-ink/60")}>
                 {Math.round(hud.wind * 100)}%
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full border border-ink/20 bg-ink/10">
+            <div className="h-1.5 w-full overflow-hidden rounded-full border border-ink/20 bg-ink/10">
               <div
                 className="h-full rounded-full transition-[width] duration-100 ease-linear"
                 style={{
@@ -79,18 +77,14 @@ export default function Hud({
                 }}
               />
             </div>
-          </Plate>
 
-          {/* заряд проскока — отдельный прогресс-бар, раньше был виден только
-              по едва заметной заливке круглой кнопки в углу */}
-          <Plate className="w-full max-w-[260px]">
-            <div className="mb-1 flex items-baseline justify-between">
-              <span className="text-xs font-semibold tracking-[0.22em] text-ink/70">{t("hud.dash")}</span>
+            <div className="mt-1.5 mb-0.5 flex items-baseline justify-between">
+              <span className="text-xs font-semibold tracking-[0.2em] text-ink/70">{t("hud.dash")}</span>
               <span className={"tabnum text-xs font-semibold " + (hud.dash >= 1 ? "text-copper" : "text-ink/60")}>
                 {hud.dash >= 1 ? t("hud.dashReady") : `${Math.round(hud.dash * 100)}%`}
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full border border-ink/20 bg-ink/10">
+            <div className="h-1.5 w-full overflow-hidden rounded-full border border-ink/20 bg-ink/10">
               <div
                 className={
                   "h-full rounded-full transition-[width] duration-100 ease-linear " +
