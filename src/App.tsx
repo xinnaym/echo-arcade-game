@@ -3,11 +3,13 @@ import { EchoGame, type GameOverInfo, type HudData, type Phase } from "./game/en
 import Hud from "./components/Hud";
 import Overlay from "./components/Overlay";
 import Leaderboard from "./components/Leaderboard";
+import { onLocaleChange } from "./i18n";
 import {
   gameplayStart,
   gameplayStop,
   loadBestScore,
   maybeShowInterstitial,
+  notifyScoreUpdated,
   saveBestScore,
   submitLeaderboardScore,
 } from "./yandex";
@@ -36,6 +38,12 @@ export default function App() {
   const [canRestart, setCanRestart] = useState(true);
   const [muted, setMuted] = useState(false);
   const canRestartRef = useRef(true);
+  const [, forceRerender] = useState(0);
+
+  // язык может подтянуться из SDK уже после первого рендера (main.tsx больше
+  // не блокирует старт на ожидании SDK) — перерисовываем текст, когда это
+  // произойдёт, без перезагрузки страницы
+  useEffect(() => onLocaleChange(() => forceRerender((n) => n + 1)), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,7 +62,8 @@ export default function App() {
         }, 800);
         if (info.newBest) {
           void saveBestScore(info.best); // облако; localStorage уже записан движком
-          void submitLeaderboardScore(info.best);
+          void submitLeaderboardScore(info.best).then(notifyScoreUpdated);
+          notifyScoreUpdated(); // офлайн-фоллбек (localStorage) — сразу, без ожидания сети
         }
         // показ — после остановки геймплея (onPhase->gameplayStop уже отработал),
         // не чаще раза в N смертей

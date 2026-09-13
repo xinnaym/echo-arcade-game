@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchLeaderboard, type LeaderboardRow } from "../yandex";
+import { fetchLeaderboard, onScoreUpdated, type LeaderboardRow } from "../yandex";
 import { BEST_KEY } from "../game/engine";
 import { t } from "../i18n";
 
@@ -9,25 +9,33 @@ export default function Leaderboard() {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchLeaderboard().then((r) => {
-      if (cancelled) return;
-      if (r) {
-        setRows(r);
-        return;
-      }
-      // нет SDK / не удалось получить с платформы — показываем локальный
-      // рекорд, чтобы виджет не был просто невидимым при локальном тесте
-      let best = 0;
-      try {
-        best = Number(localStorage.getItem(BEST_KEY) ?? 0) || 0;
-      } catch {
-        best = 0;
-      }
-      setRows([{ rank: 1, name: t("leaderboard.you"), score: best, isMe: true }]);
-      setOffline(true);
-    });
+    const load = () => {
+      void fetchLeaderboard().then((r) => {
+        if (cancelled) return;
+        if (r) {
+          setRows(r);
+          setOffline(false);
+          return;
+        }
+        // нет SDK / не удалось получить с платформы — показываем локальный
+        // рекорд, чтобы виджет не был просто невидимым при локальном тесте
+        let best = 0;
+        try {
+          best = Number(localStorage.getItem(BEST_KEY) ?? 0) || 0;
+        } catch {
+          best = 0;
+        }
+        setRows([{ rank: 1, name: t("leaderboard.you"), score: best, isMe: true }]);
+        setOffline(true);
+      });
+    };
+    load();
+    // перечитываем сразу после нового рекорда (см. App.tsx:onOver) — без этого
+    // виджет показывал старое значение до перезагрузки страницы
+    const unsubscribe = onScoreUpdated(load);
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, []);
 

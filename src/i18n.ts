@@ -22,7 +22,7 @@ const ru: Dict = {
   "menu.key": "ключ",
   "menu.start": "ЗАВЕСТИ МЕХАНИЗМ",
   "menu.controlsMouse": "мышь / WASD — движение",
-  "menu.controlsDash": "пробел (или двойное касание) — проскок",
+  "menu.controlsDash": "пробел / ПКМ (или двойное касание) — проскок",
   "menu.best": "рекорд · {n}",
   "paused.title": "ПАУЗА",
   "paused.subtitle": "Механизм замер. Шестерни ждут.",
@@ -48,7 +48,7 @@ const ru: Dict = {
   "hud.muteOff": "Выключить звук",
   "hud.pause": "Пауза",
   "hud.controlsMove": "мышь или WASD — движение",
-  "hud.controlsDash": "пробел — проскок · Esc — пауза",
+  "hud.controlsDash": "пробел / ПКМ — проскок · Esc — пауза",
   "hud.dash": "Проскок",
   "hud.dashReady": "готов",
   "over.reason.spring": "Завод кончился",
@@ -56,7 +56,8 @@ const ru: Dict = {
   "over.reason.echo": "Столкновение с эхом",
   "over.hint.echo": "Проскок (Пробел) даёт мгновение неуязвимости — проходите сквозь эхо.",
   "game.echoAwoke": "ЭХО ПРОБУДИЛОСЬ",
-  "leaderboard.title": "Лидеры мастерской",
+  "game.echoShattered": "ЭХО РАЗБИТО",
+  "leaderboard.title": "Лидеры",
   "leaderboard.you": "Вы",
   "leaderboard.empty": "Пока пусто",
   "leaderboard.offline": "офлайн · локальный рекорд",
@@ -76,7 +77,7 @@ const en: Dict = {
   "menu.key": "key",
   "menu.start": "WIND THE MECHANISM",
   "menu.controlsMouse": "mouse / WASD — move",
-  "menu.controlsDash": "space (or double tap) — dash",
+  "menu.controlsDash": "space / right-click (or double tap) — dash",
   "menu.best": "best · {n}",
   "paused.title": "PAUSED",
   "paused.subtitle": "The mechanism is still. Gears are waiting.",
@@ -102,7 +103,7 @@ const en: Dict = {
   "hud.muteOff": "Mute",
   "hud.pause": "Pause",
   "hud.controlsMove": "mouse or WASD — move",
-  "hud.controlsDash": "space — dash · Esc — pause",
+  "hud.controlsDash": "space / right-click — dash · Esc — pause",
   "hud.dash": "Dash",
   "hud.dashReady": "ready",
   "over.reason.spring": "Out of wind",
@@ -110,7 +111,8 @@ const en: Dict = {
   "over.reason.echo": "Collided with an echo",
   "over.hint.echo": "Dash (Space) grants a moment of invulnerability — pass right through echoes.",
   "game.echoAwoke": "ECHO AWAKENED",
-  "leaderboard.title": "Workshop leaders",
+  "game.echoShattered": "ECHO SHATTERED",
+  "leaderboard.title": "Leaders",
   "leaderboard.you": "You",
   "leaderboard.empty": "Nothing yet",
   "leaderboard.offline": "offline · local best",
@@ -120,10 +122,22 @@ const en: Dict = {
 const dicts: Record<Locale, Dict> = { ru, en };
 
 let current: Locale = DEV_LOCALE;
+const listeners = new Set<() => void>();
 
 export function setLocale(l: string | undefined | null) {
   const norm = (l ?? "").slice(0, 2).toLowerCase();
-  current = (SUPPORTED as string[]).includes(norm) ? (norm as Locale) : DEV_LOCALE;
+  const next = (SUPPORTED as string[]).includes(norm) ? (norm as Locale) : DEV_LOCALE;
+  if (next === current) return;
+  current = next;
+  listeners.forEach((fn) => fn());
+}
+
+// Подписка на смену языка — используется в App.tsx, чтобы перерисовать текст,
+// когда язык платформы подтягивается уже ПОСЛЕ первого рендера (см. main.tsx:
+// рендерим сразу с дефолтом, не блокируя старт на ожидании SDK).
+export function onLocaleChange(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
 }
 
 // Язык из URL (?lang=en) — работает и в дебаг-режиме Яндекс Игр (&lang=...),

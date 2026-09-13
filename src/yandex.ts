@@ -167,6 +167,17 @@ export async function submitLeaderboardScore(best: number): Promise<void> {
   }
 }
 
+// Оповещение о новом рекорде — Leaderboard.tsx перечитывает данные сразу
+// после проигрыша, без необходимости перезагружать страницу.
+const scoreListeners = new Set<() => void>();
+export function notifyScoreUpdated() {
+  scoreListeners.forEach((fn) => fn());
+}
+export function onScoreUpdated(cb: () => void): () => void {
+  scoreListeners.add(cb);
+  return () => scoreListeners.delete(cb);
+}
+
 export interface LeaderboardRow {
   rank: number;
   name: string;

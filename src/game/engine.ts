@@ -73,7 +73,15 @@ const MAX_ECHOES = 16;
 const MAT_TIME = 1.15;
 
 const PLAYER_R = 0.038;
-const MAX_SPEED = 0.92;
+
+// ——— НАСТРОЙКИ УПРАВЛЕНИЯ (крутить и сравнивать на ощупь) ———
+// MOUSE_SENSITIVITY — множитель смещения курсора мыши от центра арены.
+// 1.0 = как сейчас (позиция курсора = целевая точка 1:1). Больше 1 — до края
+// арены долетаешь при меньшем реальном перемещении мыши («острее»).
+const MOUSE_SENSITIVITY = 1.0;
+// PLAYER_SPEED — максимальная скорость игрока, в единицах арены/сек (1.0 = радиус арены в секунду).
+const PLAYER_SPEED = 0.92;
+const MAX_SPEED = PLAYER_SPEED; // старое имя используется ниже по коду
 const STEER = 9.5;
 const DASH_SPEED = 2.45;
 const DASH_TIME = 0.16;
@@ -370,7 +378,7 @@ export class EchoGame {
       const dy = (p.y - this.touchAnchor.y) * 1.45;
       this.pointerTarget = { x: this.touchOrigin.x + dx, y: this.touchOrigin.y + dy };
     } else {
-      this.pointerTarget = p;
+      this.pointerTarget = { x: p.x * MOUSE_SENSITIVITY, y: p.y * MOUSE_SENSITIVITY };
     }
     this.pointerSteer = true;
   };
@@ -388,7 +396,7 @@ export class EchoGame {
       this.pointerSteer = true;
       this.canvas.setPointerCapture?.(e.pointerId);
     } else {
-      this.pointerTarget = p;
+      this.pointerTarget = { x: p.x * MOUSE_SENSITIVITY, y: p.y * MOUSE_SENSITIVITY };
       this.pointerSteer = true;
       if (e.button === 2) this.dash();
     }
@@ -818,7 +826,7 @@ export class EchoGame {
     this.shake = 1;
     this.flash = 0.7;
     this.flashColor = "255,228,168";
-    this.floater(k.x, k.y, "+120 · ЭХО РАЗБИТО", "#8c3b23", 26);
+    this.floater(k.x, k.y, `+120 · ${t("game.echoShattered")}`, "#8c3b23", 26);
     for (let i = 0; i < 28; i++) this.burst(k.x, k.y, 1, i % 2 ? C.brassL : C.brass);
     for (const e of this.echoes) this.crumble(e, true);
     if (this.echoes.length) this.sfx.crumble();

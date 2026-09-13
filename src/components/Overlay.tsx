@@ -107,7 +107,7 @@ export default function Overlay({
 
           <ul className="mx-auto max-w-md space-y-3 text-left text-base leading-relaxed text-ink/85">
             <li className="flex gap-3">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-display text-xs font-bold">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-sans text-xs font-bold leading-none text-ink">
                 1
               </span>
               <span>
@@ -115,7 +115,7 @@ export default function Overlay({
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-display text-xs font-bold">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-sans text-xs font-bold leading-none text-ink">
                 2
               </span>
               <span>
@@ -123,7 +123,7 @@ export default function Overlay({
               </span>
             </li>
             <li className="flex gap-3">
-              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-display text-xs font-bold">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-sans text-xs font-bold leading-none text-ink">
                 3
               </span>
               <span>
