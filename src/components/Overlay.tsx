@@ -56,7 +56,7 @@ function Card({ children }: { children: React.ReactNode }) {
 function Stat({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="rounded-lg border border-ink/20 bg-paper-2/60 px-3 py-2 text-center">
-      <div className="text-[10px] font-semibold tracking-[0.18em] text-ink/50">{label}</div>
+      <div className="text-xs font-semibold tracking-[0.18em] text-ink/65">{label}</div>
       <div className={"tabnum font-display text-2xl font-bold " + (accent ? "text-copper" : "text-ink")}>{value}</div>
     </div>
   );
@@ -91,13 +91,13 @@ export default function Overlay({
     <div className="absolute inset-0 z-20 flex items-center justify-center bg-ink/35 p-4 backdrop-blur-[3px]">
       {phase === "menu" && (
         <Card>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-3 text-center">
             <GearMark className="animate-spin-slow h-14 w-14 shrink-0 text-brass" />
             <div>
               <h1 className="font-display text-5xl leading-none font-bold tracking-[0.18em] text-ink sm:text-6xl">
                 {t("menu.title")}
               </h1>
-              <p className="mt-1 text-[11px] font-semibold tracking-[0.28em] text-ink/50 uppercase">
+              <p className="mt-1 text-xs font-semibold tracking-[0.28em] text-ink/65 uppercase">
                 {t("menu.subtitle")}
               </p>
             </div>
@@ -105,7 +105,7 @@ export default function Overlay({
 
           <div className="my-5 h-px bg-gradient-to-r from-transparent via-ink/30 to-transparent" />
 
-          <ul className="space-y-3 text-sm leading-relaxed text-ink/75">
+          <ul className="mx-auto max-w-md space-y-3 text-left text-base leading-relaxed text-ink/85">
             <li className="flex gap-3">
               <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-ink/30 bg-brass/25 font-display text-xs font-bold">
                 1
@@ -132,9 +132,9 @@ export default function Overlay({
             </li>
           </ul>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-6 flex flex-col items-center gap-3">
             <Btn onClick={onStart}>{t("menu.start")}</Btn>
-            <div className="text-right text-[11px] leading-relaxed tracking-wide text-ink/50">
+            <div className="text-center text-xs leading-relaxed tracking-wide text-ink/65">
               <div>{t("menu.controlsMouse")}</div>
               <div>{t("menu.controlsDash")}</div>
               {best > 0 && (
@@ -147,29 +147,31 @@ export default function Overlay({
 
       {phase === "paused" && (
         <Card>
-          <h2 className="font-display text-4xl font-bold tracking-[0.12em] text-ink">{t("paused.title")}</h2>
-          <p className="mt-2 text-sm text-ink/60">{t("paused.subtitle")}</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Btn onClick={onResume}>{t("paused.resume")}</Btn>
-            <Btn variant="ghost" onClick={onStart}>
-              {t("paused.restart")}
-            </Btn>
-            <Btn variant="ghost" onClick={onMenu}>
-              {t("paused.menu")}
-            </Btn>
+          <div className="flex flex-col items-center text-center">
+            <h2 className="font-display text-4xl font-bold tracking-[0.12em] text-ink">{t("paused.title")}</h2>
+            <p className="mt-2 text-base text-ink/70">{t("paused.subtitle")}</p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Btn onClick={onResume}>{t("paused.resume")}</Btn>
+              <Btn variant="ghost" onClick={onStart}>
+                {t("paused.restart")}
+              </Btn>
+              <Btn variant="ghost" onClick={onMenu}>
+                {t("paused.menu")}
+              </Btn>
+            </div>
           </div>
         </Card>
       )}
 
       {phase === "over" && over && (
         <Card>
-          <div className="flex items-start gap-4">
+          <div className="flex flex-col items-center gap-2 text-center">
             <GearMark className="animate-spin-slow-rev h-12 w-12 shrink-0 text-rust" />
             <div>
               <h2 className="font-display text-4xl leading-none font-bold tracking-[0.08em] text-ink">
                 {t("over.title")}
               </h2>
-              <p className="mt-1.5 text-sm font-semibold tracking-wide text-rust">{over.reason}</p>
+              <p className="mt-1.5 text-base font-semibold tracking-wide text-rust">{over.reason}</p>
             </div>
           </div>
 
@@ -179,25 +181,27 @@ export default function Overlay({
             </div>
           )}
 
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mx-auto mt-5 grid max-w-md grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label={t("over.points")} value={String(over.points)} accent />
             <Stat label={t("over.gears")} value={String(over.gears)} />
             <Stat label={t("over.time")} value={fmtTime(over.time)} />
             <Stat label={t("over.best")} value={String(over.best)} />
           </div>
 
-          <p className="mt-4 text-xs leading-relaxed text-ink/55 italic">{over.hint}</p>
+          <p className="mx-auto mt-4 max-w-md text-center text-sm leading-relaxed text-ink/70 italic">
+            {over.hint}
+          </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Btn onClick={onStart} disabled={!canRestart}>
-              {t("over.again")}
-            </Btn>
-            <Btn variant="ghost" onClick={onMenu}>
-              {t("over.menu")}
-            </Btn>
-            <span className="ml-auto hidden text-[11px] tracking-wide text-ink/40 sm:block">
-              {t("over.enterHint")}
-            </span>
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Btn onClick={onStart} disabled={!canRestart}>
+                {t("over.again")}
+              </Btn>
+              <Btn variant="ghost" onClick={onMenu}>
+                {t("over.menu")}
+              </Btn>
+            </div>
+            <span className="hidden text-xs tracking-wide text-ink/50 sm:block">{t("over.enterHint")}</span>
           </div>
         </Card>
       )}

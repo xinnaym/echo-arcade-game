@@ -78,10 +78,10 @@ const STEER = 9.5;
 const DASH_SPEED = 2.45;
 const DASH_TIME = 0.16;
 const DASH_INVULN = 0.34;
-const DASH_CD = 3.3;
+const DASH_CD = 5.5; // было 3.3 — по просьбе увеличено время перезарядки
 
 const WIND_MAX = 100;
-const BEST_KEY = "echo.best.v1";
+export const BEST_KEY = "echo.best.v1"; // экспорт — используется в Leaderboard.tsx как офлайн-фоллбек
 
 const C = {
   paper: "#f4e9d2",
@@ -1092,7 +1092,9 @@ export class EchoGame {
       ctx.strokeStyle = `rgba(${C.brass},${0.25 + 0.15 * Math.sin(t * 3.4)})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(x, y, r * 1.9 + Math.sin(t * 3.4) * 3, 0, TAU);
+      // r ==0 сразу после спавна (pop=0) — без ограничения снизу колебание
+      // синуса уходит в отрицательный радиус и валит весь кадр отрисовки
+      ctx.arc(x, y, Math.max(0, r * 1.9 + Math.sin(t * 3.4) * 3), 0, TAU);
       ctx.stroke();
 
       ctx.fillStyle = "rgba(46,35,24,0.2)";

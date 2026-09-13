@@ -50,6 +50,7 @@ const ru: Dict = {
   "hud.controlsMove": "мышь или WASD — движение",
   "hud.controlsDash": "пробел — проскок · Esc — пауза",
   "hud.dash": "Проскок",
+  "hud.dashReady": "готов",
   "over.reason.spring": "Завод кончился",
   "over.hint.spring": "Пружина слабеет всё быстрее — не задерживайтесь между шестернями.",
   "over.reason.echo": "Столкновение с эхом",
@@ -57,6 +58,7 @@ const ru: Dict = {
   "leaderboard.title": "Лидеры мастерской",
   "leaderboard.you": "Вы",
   "leaderboard.empty": "Пока пусто",
+  "leaderboard.offline": "офлайн · локальный рекорд",
   "shop.unlockWithAd": "Открыть за рекламу",
 };
 
@@ -101,6 +103,7 @@ const en: Dict = {
   "hud.controlsMove": "mouse or WASD — move",
   "hud.controlsDash": "space — dash · Esc — pause",
   "hud.dash": "Dash",
+  "hud.dashReady": "ready",
   "over.reason.spring": "Out of wind",
   "over.hint.spring": "The spring weakens faster and faster — don't linger between gears.",
   "over.reason.echo": "Collided with an echo",
@@ -108,6 +111,7 @@ const en: Dict = {
   "leaderboard.title": "Workshop leaders",
   "leaderboard.you": "You",
   "leaderboard.empty": "Nothing yet",
+  "leaderboard.offline": "offline · local best",
   "shop.unlockWithAd": "Unlock with an ad",
 };
 
@@ -118,6 +122,17 @@ let current: Locale = DEV_LOCALE;
 export function setLocale(l: string | undefined | null) {
   const norm = (l ?? "").slice(0, 2).toLowerCase();
   current = (SUPPORTED as string[]).includes(norm) ? (norm as Locale) : DEV_LOCALE;
+}
+
+// Язык из URL (?lang=en) — работает и в дебаг-режиме Яндекс Игр (&lang=...),
+// и локально без SDK, где выбрать язык иначе просто негде. Имеет приоритет
+// над ysdk.environment.i18n.lang, чтобы можно было форсировать язык для теста.
+export function localeFromUrl(): string | null {
+  try {
+    return new URLSearchParams(window.location.search).get("lang");
+  } catch {
+    return null;
+  }
 }
 
 export function getLocale(): Locale {

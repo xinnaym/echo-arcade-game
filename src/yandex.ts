@@ -152,7 +152,8 @@ export async function saveBestScore(best: number): Promise<void> {
 
 // ——— лидерборды ———
 // Техническое имя ДОЛЖНО дословно совпадать с именем в консоли Яндекс Игр.
-const LEADERBOARD_NAME = "echo_best";
+// Подчёркивания в имени лидерборда запрещены платформой — camelCase.
+const LEADERBOARD_NAME = "echoLeaderboard";
 
 export async function submitLeaderboardScore(best: number): Promise<void> {
   if (!ysdk) return;
@@ -197,16 +198,10 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[] | null> {
 // ——— реклама ———
 // interstitial и rewarded — разные механики: interstitial не даёт награды.
 
-let deathsSinceInterstitial = 0;
-const INTERSTITIAL_EVERY_N_DEATHS = 2;
-
 // Вызывать ПОСЛЕ остановки геймплея (GameplayAPI.stop() уже произошёл).
-// Показывает interstitial не после каждой смерти, а раз в N.
+// По требованию — показывается после каждого проигрыша, без ограничения частоты.
 export function maybeShowInterstitial(): void {
   if (!ysdk) return;
-  deathsSinceInterstitial += 1;
-  if (deathsSinceInterstitial < INTERSTITIAL_EVERY_N_DEATHS) return;
-  deathsSinceInterstitial = 0;
   try {
     ysdk.adv.showFullscreenAdv({
       callbacks: {
