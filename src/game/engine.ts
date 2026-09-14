@@ -80,13 +80,13 @@ const PLAYER_R = 0.038;
 // арены долетаешь при меньшем реальном перемещении мыши («острее»).
 const MOUSE_SENSITIVITY = 1.0;
 // PLAYER_SPEED — максимальная скорость игрока, в единицах арены/сек (1.0 = радиус арены в секунду).
-const PLAYER_SPEED = 0.92;
+const PLAYER_SPEED = 1.3;
 const MAX_SPEED = PLAYER_SPEED; // старое имя используется ниже по коду
 const STEER = 9.5;
 const DASH_SPEED = 2.45;
 const DASH_TIME = 0.16;
 const DASH_INVULN = 0.34;
-const DASH_CD = 5.5; // было 3.3 — по просьбе увеличено время перезарядки
+const DASH_CD = 4.4; // было 3.3 — по просьбе увеличено время перезарядки
 
 const WIND_MAX = 100;
 export const BEST_KEY = "echo.best.v1"; // экспорт — используется в Leaderboard.tsx как офлайн-фоллбек
