@@ -5,7 +5,6 @@ import { t } from "../i18n";
 
 export default function Leaderboard() {
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
-  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -14,7 +13,6 @@ export default function Leaderboard() {
         if (cancelled) return;
         if (r) {
           setRows(r);
-          setOffline(false);
           return;
         }
         // нет SDK / не удалось получить с платформы — показываем локальный
@@ -26,7 +24,6 @@ export default function Leaderboard() {
           best = 0;
         }
         setRows([{ rank: 1, name: t("leaderboard.you"), score: best, isMe: true }]);
-        setOffline(true);
       });
     };
     load();
@@ -64,7 +61,6 @@ export default function Leaderboard() {
           ))}
         </ol>
       )}
-      {offline && <div className="mt-1.5 text-[10px] text-ink/40">{t("leaderboard.offline")}</div>}
     </div>
   );
 }
