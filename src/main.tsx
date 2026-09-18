@@ -5,6 +5,11 @@ import App from "./App";
 import { setLocale, localeFromUrl } from "./i18n";
 import { getLanguage, initYandexSdk, reportLoadingReady } from "./yandex";
 
+// Блокировка контекстного меню браузера по всей игре (ПКМ на десктопе, лонгтап на тач-устройствах)
+if (typeof window !== "undefined") {
+  window.addEventListener("contextmenu", (e) => e.preventDefault(), { capture: true });
+}
+
 // ?lang= в URL — форсирует язык (работает в дебаге Яндекса и локально, где
 // иначе язык не выбрать никак). Без параметра — дефолт разработки, пока SDK
 // не ответит; на платформе почти всегда успевает до первого осмысленного

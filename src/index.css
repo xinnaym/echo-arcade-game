@@ -19,6 +19,9 @@ html,
 body,
 #root {
   height: 100%;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 body {
@@ -28,6 +31,8 @@ body {
   color: var(--color-ink);
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -36,6 +41,8 @@ canvas {
   touch-action: none;
   display: block;
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .select-none-all {

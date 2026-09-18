@@ -6,6 +6,7 @@ export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   muted = false;
+  private systemMuted = false;
 
   ensure() {
     if (typeof window === "undefined") return;
@@ -15,16 +16,31 @@ export class Sfx {
       if (!AC) return;
       this.ctx = new AC();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 0.3;
+      this.master.gain.value = this.muted || this.systemMuted ? 0 : 0.3;
       this.master.connect(this.ctx.destination);
     }
-    if (this.ctx.state === "suspended") void this.ctx.resume();
+    if (this.ctx.state === "suspended" && !this.systemMuted) void this.ctx.resume();
   }
 
   setMuted(m: boolean) {
     this.muted = m;
+    this.updateGain();
+  }
+
+  setSystemMuted(m: boolean) {
+    this.systemMuted = m;
+    this.updateGain();
+    if (m && this.ctx && this.ctx.state === "running") {
+      void this.ctx.suspend();
+    } else if (!m && this.ctx && this.ctx.state === "suspended") {
+      void this.ctx.resume();
+    }
+  }
+
+  private updateGain() {
     if (this.master && this.ctx) {
-      this.master.gain.setTargetAtTime(m ? 0 : 0.3, this.ctx.currentTime, 0.02);
+      const vol = this.muted || this.systemMuted ? 0 : 0.3;
+      this.master.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.02);
     }
   }
 
@@ -41,7 +57,7 @@ export class Sfx {
     glide?: number;
     cutoff?: number;
   }) {
-    if (!this.ctx || !this.master || this.muted) return;
+    if (!this.ctx || !this.master || this.muted || this.systemMuted) return;
     const { freq, dur, type = "triangle", vol = 0.5, delay = 0, glide, cutoff = 2600 } = opts;
     const t0 = this.t + delay;
     const osc = this.ctx.createOscillator();
@@ -63,7 +79,7 @@ export class Sfx {
   }
 
   private noise(opts: { dur: number; vol?: number; delay?: number; cutoff?: number; sweepTo?: number }) {
-    if (!this.ctx || !this.master || this.muted) return;
+    if (!this.ctx || !this.master || this.muted || this.systemMuted) return;
     const { dur, vol = 0.25, delay = 0, cutoff = 1400, sweepTo } = opts;
     const t0 = this.t + delay;
     const len = Math.max(1, Math.floor(this.ctx.sampleRate * dur));

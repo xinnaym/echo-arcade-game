@@ -306,16 +306,23 @@ export class EchoGame {
     this.sfx.setMuted(m);
   }
 
+  setSystemMuted(m: boolean) {
+    this.sfx.setSystemMuted(m);
+  }
+
   destroy() {
     cancelAnimationFrame(this.raf);
     window.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("keyup", this.onKeyUp);
     window.removeEventListener("blur", this.onBlur);
+    window.removeEventListener("focus", this.onFocus);
+    document.removeEventListener("visibilitychange", this.onVisibilityChange);
     this.canvas.removeEventListener("pointermove", this.onPointerMove);
     this.canvas.removeEventListener("pointerdown", this.onPointerDown);
     this.canvas.removeEventListener("pointerup", this.onPointerUp);
     this.canvas.removeEventListener("pointercancel", this.onPointerUp);
     this.canvas.removeEventListener("pointerleave", this.onPointerLeave);
+    this.canvas.removeEventListener("contextmenu", this.onContextMenu);
   }
 
   resize() {
@@ -344,14 +351,39 @@ export class EchoGame {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("blur", this.onBlur);
+    window.addEventListener("focus", this.onFocus);
+    document.addEventListener("visibilitychange", this.onVisibilityChange);
     this.canvas.addEventListener("pointermove", this.onPointerMove);
     this.canvas.addEventListener("pointerdown", this.onPointerDown);
     this.canvas.addEventListener("pointerup", this.onPointerUp);
     this.canvas.addEventListener("pointercancel", this.onPointerUp);
     this.canvas.addEventListener("pointerleave", this.onPointerLeave);
+    this.canvas.addEventListener("contextmenu", this.onContextMenu);
   }
 
-  private onBlur = () => this.pause();
+  private onContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
+  };
+
+  private onBlur = () => {
+    this.pause();
+    this.sfx.setSystemMuted(true);
+  };
+
+  private onFocus = () => {
+    if (!document.hidden) {
+      this.sfx.setSystemMuted(false);
+    }
+  };
+
+  private onVisibilityChange = () => {
+    if (document.hidden) {
+      this.pause();
+      this.sfx.setSystemMuted(true);
+    } else {
+      this.sfx.setSystemMuted(false);
+    }
+  };
 
   private onKeyDown = (e: KeyboardEvent) => {
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
@@ -398,7 +430,10 @@ export class EchoGame {
     } else {
       this.pointerTarget = { x: p.x * MOUSE_SENSITIVITY, y: p.y * MOUSE_SENSITIVITY };
       this.pointerSteer = true;
-      if (e.button === 2) this.dash();
+      if (e.button === 2) {
+        e.preventDefault();
+        this.dash();
+      }
     }
   };
 

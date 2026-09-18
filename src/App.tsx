@@ -10,6 +10,7 @@ import {
   loadBestScore,
   maybeShowInterstitial,
   notifyScoreUpdated,
+  onAdAudioMute,
   saveBestScore,
   submitLeaderboardScore,
 } from "./yandex";
@@ -93,6 +94,10 @@ export default function App() {
     setMuted(stored);
     game.setMuted(stored);
 
+    const unsubAdAudio = onAdAudioMute((adMuted) => {
+      game.setSystemMuted(adMuted);
+    });
+
     const ro = new ResizeObserver(() => game.resize());
     ro.observe(canvas);
     const onWinResize = () => game.resize();
@@ -129,6 +134,7 @@ export default function App() {
     window.addEventListener("keydown", onKey);
 
     return () => {
+      unsubAdAudio();
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onWinResize);
       ro.disconnect();

@@ -208,39 +208,92 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[] | null> {
 
 // ——— реклама ———
 // interstitial и rewarded — разные механики: interstitial не даёт награды.
+// По требованию модерации Яндекс Игр: во время воспроизведения рекламы
+// звук игры ОБЯЗАН быть выключен, а после закрытия рекламы — включен обратно.
+
+export interface AdCallbacks {
+  onOpen?: () => void;
+  onClose?: (wasShown?: boolean) => void;
+  onError?: (err?: any) => void;
+}
+
+const adAudioListeners = new Set<(muted: boolean) => void>();
+export function onAdAudioMute(cb: (muted: boolean) => void): () => void {
+  adAudioListeners.add(cb);
+  return () => adAudioListeners.delete(cb);
+}
+function setAdAudioMute(muted: boolean) {
+  adAudioListeners.forEach((fn) => fn(muted));
+}
 
 // Вызывать ПОСЛЕ остановки геймплея (GameplayAPI.stop() уже произошёл).
-// По требованию — показывается после каждого проигрыша, без ограничения частоты.
-export function maybeShowInterstitial(): void {
-  if (!ysdk) return;
+// Показ — после каждого проигрыша, с гарантированным отключением звука.
+export function maybeShowInterstitial(opts?: AdCallbacks): void {
+  if (!ysdk) {
+    opts?.onClose?.(false);
+    return;
+  }
   try {
     ysdk.adv.showFullscreenAdv({
       callbacks: {
-        onClose: () => {},
-        onError: () => {},
+        onOpen: () => {
+          setAdAudioMute(true);
+          opts?.onOpen?.();
+        },
+        onClose: (wasShown: boolean) => {
+          setAdAudioMute(false);
+          opts?.onClose?.(wasShown);
+        },
+        onError: (err: any) => {
+          setAdAudioMute(false);
+          opts?.onError?.(err);
+        },
+        onOffline: () => {
+          setAdAudioMute(false);
+          opts?.onClose?.(false);
+        },
       },
     });
   } catch {
-    /* ignore */
+    setAdAudioMute(false);
+    opts?.onClose?.(false);
   }
 }
 
 // Rewarded-анлок засчитывается ТОЛЬКО по колбэку onRewarded — не по onClose.
-export function showRewardedForUnlock(): Promise<boolean> {
+// Звук глушится на время показа и восстанавливается по окончании.
+export function showRewardedForUnlock(opts?: AdCallbacks): Promise<boolean> {
   return new Promise((resolve) => {
-    if (!ysdk) return resolve(false);
+    if (!ysdk) {
+      opts?.onClose?.(false);
+      return resolve(false);
+    }
     let rewarded = false;
     try {
       ysdk.adv.showRewardedVideo({
         callbacks: {
+          onOpen: () => {
+            setAdAudioMute(true);
+            opts?.onOpen?.();
+          },
           onRewarded: () => {
             rewarded = true;
           },
-          onClose: () => resolve(rewarded),
-          onError: () => resolve(false),
+          onClose: () => {
+            setAdAudioMute(false);
+            opts?.onClose?.(true);
+            resolve(rewarded);
+          },
+          onError: (err: any) => {
+            setAdAudioMute(false);
+            opts?.onError?.(err);
+            resolve(false);
+          },
         },
       });
     } catch {
+      setAdAudioMute(false);
+      opts?.onError?.();
       resolve(false);
     }
   });
