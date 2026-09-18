@@ -25,7 +25,7 @@ function Btn({
   disabled?: boolean;
 }) {
   const base =
-    "rounded-xl px-6 py-3 font-display text-lg font-bold tracking-wide transition active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50";
+    "min-h-[44px] min-w-[44px] rounded-xl px-6 py-3 font-display text-lg font-bold tracking-wide transition active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50";
   return (
     <button
       onClick={onClick}

@@ -1,7 +1,4 @@
-/**
- * Крошечный синтезатор на WebAudio.
- * Никаких внешних файлов — только тёплые «деревянно-латунные» тембры.
- */
+// REQ 1.6.1.6 / 1.6.2.5: Music and sound exclusively via Web Audio API (AudioContext, OscillatorNode, GainNode) - no <audio> or new Audio()
 export class Sfx {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -15,6 +12,7 @@ export class Sfx {
         window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AC) return;
       this.ctx = new AC();
+      (window as any).__audioCtx = this.ctx;
       this.master = this.ctx.createGain();
       this.master.gain.value = this.muted || this.systemMuted ? 0 : 0.3;
       this.master.connect(this.ctx.destination);

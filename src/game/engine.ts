@@ -386,7 +386,20 @@ export class EchoGame {
   };
 
   private onKeyDown = (e: KeyboardEvent) => {
-    if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
+    // Поддержка любой раскладки (включая русскую) строго через физические клавиши e.code
+    if (
+      e.code === "KeyW" ||
+      e.code === "KeyA" ||
+      e.code === "KeyS" ||
+      e.code === "KeyD" ||
+      e.code === "ArrowUp" ||
+      e.code === "ArrowDown" ||
+      e.code === "ArrowLeft" ||
+      e.code === "ArrowRight" ||
+      e.code === "Space"
+    ) {
+      e.preventDefault();
+    }
     if (e.repeat) return;
     this.keys.add(e.code);
     if (e.code === "Space" || e.code === "ShiftLeft" || e.code === "ShiftRight") this.dash();

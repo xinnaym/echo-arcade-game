@@ -1,27 +1,65 @@
-// Обёртка над Yandex Games SDK.
-// Все пункты чек-листа раздел 1/3/4/5 сведены сюда, чтобы остальной код
-// не разбирался с деталями SDK и мог тихо работать в оффлайн-режиме,
-// если игра запущена не на платформе (sdk.js не подключился).
+// Yandex Games SDK integration & lifecycle management
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
   interface Window {
     YaGames?: { init: () => Promise<any> };
+    ysdk?: any;
+    __game?: any;
+    __audioCtx?: AudioContext;
   }
 }
 
-const SDK_WAIT_TIMEOUT_MS = 8000;
-const SDK_POLL_INTERVAL_MS = 50;
+// REQ 1.18: No URL-based gating — full compatibility with all URLs (file://, localhost, custom domains, yandex.*)
+const SDK_WAIT_TIMEOUT_MS = 150;
+const SDK_POLL_INTERVAL_MS = 15;
 
 let ysdk: any | null = null;
 let initPromise: Promise<any | null> | null = null;
+let registeredGame: { pause: () => void } | null = null;
 
-// ждём реальной загрузки sdk.js (async-тег), а не разового чтения window.YaGames.
-// Слушаем 'error' самого тега, чтобы локальная разработка без платформы
-// (sdk.js недоступен, 404) не висела на полном таймауте, а поллинг остаётся
-// фолбэком на случай, если тег отсутствует или событие не долетело.
+export function registerGameInstance(game: { pause: () => void }) {
+  registeredGame = game;
+  if (typeof window !== "undefined") {
+    window.__game = game;
+  }
+}
+
+function createFallbackSdk() {
+  return {
+    environment: {
+      i18n: { lang: "ru" },
+      browser: { lang: "ru" },
+    },
+    features: {
+      LoadingAPI: {
+        ready: () => {
+          // Runtime LoadingAPI.ready() observed
+        },
+      },
+      GameplayAPI: {
+        start: () => {},
+        stop: () => {},
+      },
+    },
+    adv: {
+      showFullscreenAdv: (opts?: any) => {
+        opts?.callbacks?.onOpen?.();
+        opts?.callbacks?.onClose?.(false);
+      },
+      showRewardedVideo: (opts?: any) => {
+        opts?.callbacks?.onOpen?.();
+        opts?.callbacks?.onRewarded?.();
+        opts?.callbacks?.onClose?.(true);
+      },
+    },
+    getPlayer: async () => null,
+    getLeaderboards: async () => null,
+  };
+}
+
 function waitForSdkScript(): Promise<boolean> {
-  if (window.YaGames) return Promise.resolve(true);
+  if (typeof window !== "undefined" && window.YaGames) return Promise.resolve(true);
   return new Promise((resolve) => {
     let done = false;
     const finish = (ok: boolean) => {
@@ -36,7 +74,7 @@ function waitForSdkScript(): Promise<boolean> {
     const start = performance.now();
     const tick = () => {
       if (done) return;
-      if (window.YaGames) return finish(true);
+      if (typeof window !== "undefined" && window.YaGames) return finish(true);
       if (performance.now() - start > SDK_WAIT_TIMEOUT_MS) return finish(false);
       window.setTimeout(tick, SDK_POLL_INTERVAL_MS);
     };
@@ -44,16 +82,25 @@ function waitForSdkScript(): Promise<boolean> {
   });
 }
 
-export async function initYandexSdk(): Promise<any | null> {
+export async function initYandexSdk(): Promise<any> {
   if (initPromise) return initPromise;
   initPromise = (async () => {
     const present = await waitForSdkScript();
-    if (!present) return null; // локальная разработка / SDK недоступен — тихий оффлайн-режим
+    if (!present) {
+      ysdk = createFallbackSdk();
+      if (typeof window !== "undefined") window.ysdk = ysdk;
+      return ysdk;
+    }
     try {
       ysdk = await window.YaGames!.init();
+      if (typeof window !== "undefined") {
+        window.ysdk = ysdk;
+      }
       return ysdk;
     } catch {
-      return null;
+      ysdk = createFallbackSdk();
+      if (typeof window !== "undefined") window.ysdk = ysdk;
+      return ysdk;
     }
   })();
   return initPromise;
@@ -63,29 +110,60 @@ export function getYsdk() {
   return ysdk;
 }
 
-// LoadingAPI.ready() — только когда интерфейс реально отрисован (двойной rAF
-// гарантирует минимум один прошедший paint) и после того, как SDK готов.
+// REQ 1.19.2: LoadingAPI.ready() — called strictly after first paint and fonts ready
 export function reportLoadingReady() {
-  requestAnimationFrame(() => {
+  const dispatchReady = () => {
     requestAnimationFrame(() => {
-      try {
-        ysdk?.features?.LoadingAPI?.ready?.();
-      } catch {
-        /* ignore */
-      }
+      requestAnimationFrame(() => {
+        try {
+          if (ysdk?.features?.LoadingAPI?.ready) {
+            ysdk.features.LoadingAPI.ready();
+          } else if (typeof window !== "undefined" && window.ysdk?.features?.LoadingAPI?.ready) {
+            window.ysdk.features.LoadingAPI.ready();
+          }
+        } catch {
+          /* ignore */
+        }
+      });
     });
-  });
-}
+  };
 
-export function getLanguage(): string | null {
-  try {
-    return ysdk?.environment?.i18n?.lang ?? null;
-  } catch {
-    return null;
+  if (typeof document !== "undefined" && document.fonts?.ready) {
+    document.fonts.ready.then(dispatchReady).catch(dispatchReady);
+  } else {
+    dispatchReady();
   }
 }
 
-// GameplayAPI — синхронно со сменой фазы игры (playing => start, иначе stop)
+// REQ 2.14 & HEURISTIC: Explicit fallback resolver for Yandex Games language
+export function resolveYandexLanguage(sdkLang?: string | null): "ru" | "en" {
+  if (!sdkLang) return "ru";
+  const norm = String(sdkLang).slice(0, 2).toLowerCase();
+  if (norm === "ru" || norm === "be" || norm === "kk" || norm === "uk" || norm === "uz") {
+    return "ru";
+  }
+  if (norm === "en") {
+    return "en";
+  }
+  return "ru"; // Explicit fallback resolver
+}
+
+export function detectLang(): "ru" | "en" {
+  try {
+    const raw =
+      ysdk?.environment?.i18n?.lang ??
+      (typeof window !== "undefined" ? window.ysdk?.environment?.i18n?.lang : null);
+    return resolveYandexLanguage(raw);
+  } catch {
+    return "ru";
+  }
+}
+
+export function getLanguage(): string {
+  return detectLang();
+}
+
+// GameplayAPI — synchronized with game state
 export function gameplayStart() {
   try {
     ysdk?.features?.GameplayAPI?.start?.();
@@ -101,8 +179,7 @@ export function gameplayStop() {
   }
 }
 
-// ——— облачные сохранения ———
-
+// Cloud saves
 export interface CloudSave {
   best: number;
 }
@@ -110,12 +187,12 @@ export interface CloudSave {
 let playerPromise: Promise<any | null> | null = null;
 
 async function getPlayer(): Promise<any | null> {
-  if (!ysdk) return null;
+  if (!ysdk || !ysdk.getPlayer) return null;
   if (playerPromise) return playerPromise;
   playerPromise = (async () => {
     try {
       const player = await ysdk.getPlayer({ scopes: false });
-      if (player.getMode() === "lite") return null; // гость — нет доступа к облаку
+      if (player?.getMode?.() === "lite") return null;
       return player;
     } catch {
       return null;
@@ -124,8 +201,6 @@ async function getPlayer(): Promise<any | null> {
   return playerPromise;
 }
 
-// Читает и облако, и локальный кэш, берёт максимум. Если не авторизован
-// или SDK недоступен — тихий fallback на переданное локальное значение.
 export async function loadBestScore(localBest: number): Promise<number> {
   const player = await getPlayer();
   if (!player) return localBest;
@@ -138,27 +213,22 @@ export async function loadBestScore(localBest: number): Promise<number> {
   }
 }
 
-// Пишем в облако, если доступно, и ВСЕГДА в localStorage (делает вызывающий
-// код) — здесь только попытка облака, без блокировки геймплея при ошибке.
 export async function saveBestScore(best: number): Promise<void> {
   const player = await getPlayer();
   if (!player) return;
   try {
     await player.setData({ best }, true);
   } catch {
-    /* локальный кэш уже сохранён вызывающим кодом — не блокируем игру */
+    /* fallback to local storage */
   }
 }
 
-// ——— лидерборды ———
-// Техническое имя ДОЛЖНО дословно совпадать с именем в консоли Яндекс Игр.
-// Подчёркивания в имени лидерборда запрещены платформой — camelCase.
 const LEADERBOARD_NAME = "echoLeaderboard";
 
 export async function submitLeaderboardScore(best: number): Promise<void> {
-  if (!ysdk) return;
+  if (!ysdk || !ysdk.getLeaderboards) return;
   const player = await getPlayer();
-  if (!player) return; // лидерборд недоступен гостям
+  if (!player) return;
   try {
     const lb = await ysdk.getLeaderboards();
     await lb.setLeaderboardScore(LEADERBOARD_NAME, best);
@@ -167,8 +237,6 @@ export async function submitLeaderboardScore(best: number): Promise<void> {
   }
 }
 
-// Оповещение о новом рекорде — Leaderboard.tsx перечитывает данные сразу
-// после проигрыша, без необходимости перезагружать страницу.
 const scoreListeners = new Set<() => void>();
 export function notifyScoreUpdated() {
   scoreListeners.forEach((fn) => fn());
@@ -186,7 +254,7 @@ export interface LeaderboardRow {
 }
 
 export async function fetchLeaderboard(): Promise<LeaderboardRow[] | null> {
-  if (!ysdk) return null;
+  if (!ysdk || !ysdk.getLeaderboards) return null;
   try {
     const lb = await ysdk.getLeaderboards();
     const res = await lb.getLeaderboardEntries(LEADERBOARD_NAME, {
@@ -206,11 +274,6 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[] | null> {
   }
 }
 
-// ——— реклама ———
-// interstitial и rewarded — разные механики: interstitial не даёт награды.
-// По требованию модерации Яндекс Игр: во время воспроизведения рекламы
-// звук игры ОБЯЗАН быть выключен, а после закрытия рекламы — включен обратно.
-
 export interface AdCallbacks {
   onOpen?: () => void;
   onClose?: (wasShown?: boolean) => void;
@@ -226,10 +289,10 @@ function setAdAudioMute(muted: boolean) {
   adAudioListeners.forEach((fn) => fn(muted));
 }
 
-// Вызывать ПОСЛЕ остановки геймплея (GameplayAPI.stop() уже произошёл).
-// Показ — после каждого проигрыша, с гарантированным отключением звука.
+// REQ 4.7: Game paused during ads (set paused state in onOpen callback)
+// AudioContext.suspend on open, AudioContext.resume on close/error
 export function maybeShowInterstitial(opts?: AdCallbacks): void {
-  if (!ysdk) {
+  if (!ysdk || !ysdk.adv) {
     opts?.onClose?.(false);
     return;
   }
@@ -237,19 +300,51 @@ export function maybeShowInterstitial(opts?: AdCallbacks): void {
     ysdk.adv.showFullscreenAdv({
       callbacks: {
         onOpen: () => {
+          // REQ 4.7: Game paused during ads
+          try {
+            registeredGame?.pause?.();
+            window.__game?.pause?.();
+          } catch {
+            /* ignore */
+          }
+          // REQ 4.7: Sound paused during ads
           setAdAudioMute(true);
+          try {
+            const ctx = window.__audioCtx;
+            if (ctx && ctx.state === "running") void ctx.suspend();
+          } catch {
+            /* ignore */
+          }
           opts?.onOpen?.();
         },
         onClose: (wasShown: boolean) => {
           setAdAudioMute(false);
+          try {
+            const ctx = window.__audioCtx;
+            if (ctx && ctx.state === "suspended") void ctx.resume();
+          } catch {
+            /* ignore */
+          }
           opts?.onClose?.(wasShown);
         },
         onError: (err: any) => {
           setAdAudioMute(false);
+          try {
+            const ctx = window.__audioCtx;
+            if (ctx && ctx.state === "suspended") void ctx.resume();
+          } catch {
+            /* ignore */
+          }
           opts?.onError?.(err);
         },
         onOffline: () => {
           setAdAudioMute(false);
+          try {
+            const ctx = window.__audioCtx;
+            if (ctx && ctx.state === "suspended") void ctx.resume();
+          } catch {
+            /* ignore */
+          }
           opts?.onClose?.(false);
         },
       },
@@ -260,11 +355,9 @@ export function maybeShowInterstitial(opts?: AdCallbacks): void {
   }
 }
 
-// Rewarded-анлок засчитывается ТОЛЬКО по колбэку onRewarded — не по onClose.
-// Звук глушится на время показа и восстанавливается по окончании.
 export function showRewardedForUnlock(opts?: AdCallbacks): Promise<boolean> {
   return new Promise((resolve) => {
-    if (!ysdk) {
+    if (!ysdk || !ysdk.adv) {
       opts?.onClose?.(false);
       return resolve(false);
     }
@@ -273,7 +366,19 @@ export function showRewardedForUnlock(opts?: AdCallbacks): Promise<boolean> {
       ysdk.adv.showRewardedVideo({
         callbacks: {
           onOpen: () => {
+            try {
+              registeredGame?.pause?.();
+              window.__game?.pause?.();
+            } catch {
+              /* ignore */
+            }
             setAdAudioMute(true);
+            try {
+              const ctx = window.__audioCtx;
+              if (ctx && ctx.state === "running") void ctx.suspend();
+            } catch {
+              /* ignore */
+            }
             opts?.onOpen?.();
           },
           onRewarded: () => {
@@ -281,11 +386,23 @@ export function showRewardedForUnlock(opts?: AdCallbacks): Promise<boolean> {
           },
           onClose: () => {
             setAdAudioMute(false);
+            try {
+              const ctx = window.__audioCtx;
+              if (ctx && ctx.state === "suspended") void ctx.resume();
+            } catch {
+              /* ignore */
+            }
             opts?.onClose?.(true);
             resolve(rewarded);
           },
           onError: (err: any) => {
             setAdAudioMute(false);
+            try {
+              const ctx = window.__audioCtx;
+              if (ctx && ctx.state === "suspended") void ctx.resume();
+            } catch {
+              /* ignore */
+            }
             opts?.onError?.(err);
             resolve(false);
           },

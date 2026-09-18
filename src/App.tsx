@@ -11,6 +11,8 @@ import {
   maybeShowInterstitial,
   notifyScoreUpdated,
   onAdAudioMute,
+  registerGameInstance,
+  reportLoadingReady,
   saveBestScore,
   submitLeaderboardScore,
 } from "./yandex";
@@ -66,9 +68,12 @@ export default function App() {
           void submitLeaderboardScore(info.best).then(notifyScoreUpdated);
           notifyScoreUpdated(); // офлайн-фоллбек (localStorage) — сразу, без ожидания сети
         }
-        // показ — после остановки геймплея (onPhase->gameplayStop уже отработал),
-        // не чаще раза в N смертей
-        maybeShowInterstitial();
+        // REQ 4.7: Показ рекламы — игра ставится на паузу
+        maybeShowInterstitial({
+          onOpen: () => {
+            game.pause();
+          },
+        });
       },
       onPhase: (p) => {
         setPhase(p);
@@ -77,7 +82,11 @@ export default function App() {
       },
     });
     gameRef.current = game;
+    registerGameInstance(game);
     setBest(game.getBest());
+
+    // REQ 1.19.2: Сообщаем SDK о готовности строго ПОСЛЕ того, как игра отрисована и готова к приёму ввода
+    reportLoadingReady();
 
     // облако + локальный кэш — берём максимум, тихий fallback уже внутри loadBestScore
     void loadBestScore(game.getBest()).then((best) => {
@@ -167,7 +176,9 @@ export default function App() {
         ref={canvasRef}
         className="absolute inset-0 h-full w-full"
         onContextMenu={(e) => e.preventDefault()}
-      />
+      >
+        Ваш браузер не поддерживает графический режим игры.
+      </canvas>
 
       {/* бумажная фактура поверх холста */}
       <div className="grain pointer-events-none absolute inset-0 z-10" />

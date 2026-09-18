@@ -112,19 +112,19 @@ export default function Hud({
               {t("hud.gearsEchoes", { gears: hud.gears, echoes: hud.echoes })}
             </div>
           </Plate>
-          <div className="pointer-events-auto flex gap-1.5">
+          <div className="pointer-events-auto flex gap-2">
             <button
               onClick={onMute}
               aria-label={muted ? t("hud.muteOn") : t("hud.muteOff")}
-              className="grid h-8 w-8 place-items-center rounded-lg border border-ink/25 bg-paper/80 text-ink/70 transition hover:bg-paper hover:text-ink active:scale-95"
+              className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-lg border border-ink/25 bg-paper/80 text-ink/70 transition hover:bg-paper hover:text-ink active:scale-95"
             >
               {muted ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M11 5 6 9H3v6h3l5 4z" />
                   <path d="m17 9 4 6M21 9l-4 6" strokeLinecap="round" />
                 </svg>
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M11 5 6 9H3v6h3l5 4z" />
                   <path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12" strokeLinecap="round" />
                 </svg>
@@ -134,9 +134,9 @@ export default function Hud({
               onClick={onPause}
               aria-label={t("hud.pause")}
               disabled={!playing}
-              className="grid h-8 w-8 place-items-center rounded-lg border border-ink/25 bg-paper/80 text-ink/70 transition hover:bg-paper hover:text-ink disabled:opacity-40 active:scale-95"
+              className="grid h-11 w-11 min-h-[44px] min-w-[44px] place-items-center rounded-lg border border-ink/25 bg-paper/80 text-ink/70 transition hover:bg-paper hover:text-ink disabled:opacity-40 active:scale-95"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="5" width="4" height="14" rx="1" />
                 <rect x="14" y="5" width="4" height="14" rx="1" />
               </svg>

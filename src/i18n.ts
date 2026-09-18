@@ -1,10 +1,7 @@
-// Локализация. Источник языка на платформе — ysdk.environment.i18n.lang
-// (см. src/yandex.ts). Локально без SDK используется дефолт DEV_LOCALE —
-// удобнее для скриншотов/видео и разработки "на себе".
-
+// Локализация: русский (дефолт платформы) и английский
 export type Locale = "ru" | "en";
 
-const DEV_LOCALE: Locale = "en";
+const DEV_LOCALE: Locale = "ru";
 const SUPPORTED: Locale[] = ["ru", "en"];
 
 type Dict = Record<string, string>;
@@ -130,23 +127,9 @@ export function setLocale(l: string | undefined | null) {
   listeners.forEach((fn) => fn());
 }
 
-// Подписка на смену языка — используется в App.tsx, чтобы перерисовать текст,
-// когда язык платформы подтягивается уже ПОСЛЕ первого рендера (см. main.tsx:
-// рендерим сразу с дефолтом, не блокируя старт на ожидании SDK).
 export function onLocaleChange(cb: () => void): () => void {
   listeners.add(cb);
   return () => listeners.delete(cb);
-}
-
-// Язык из URL (?lang=en) — работает и в дебаг-режиме Яндекс Игр (&lang=...),
-// и локально без SDK, где выбрать язык иначе просто негде. Имеет приоритет
-// над ysdk.environment.i18n.lang, чтобы можно было форсировать язык для теста.
-export function localeFromUrl(): string | null {
-  try {
-    return new URLSearchParams(window.location.search).get("lang");
-  } catch {
-    return null;
-  }
 }
 
 export function getLocale(): Locale {
